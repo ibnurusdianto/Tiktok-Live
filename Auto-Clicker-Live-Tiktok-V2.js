@@ -1,4 +1,3 @@
-// Auto Clicker Tiktok v.2
 const controlPanel = document.createElement('div');
 controlPanel.style.cssText = `
     position: fixed;
@@ -32,7 +31,6 @@ title.style.cssText = `
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
-// Add Author Button
 const authorButton = document.createElement('button');
 authorButton.innerHTML = '👨‍💻 Author Info';
 authorButton.style.cssText = `
@@ -156,7 +154,7 @@ likeLimitLabel.style.cssText = `
 const likeLimitInput = document.createElement('input');
 likeLimitInput.type = 'number';
 likeLimitInput.min = '1';
-likeLimitInput.value = '100'; // Default limit
+likeLimitInput.value = '100';
 likeLimitInput.style.cssText = `
     width: 70px;
     padding: 8px;
@@ -202,7 +200,8 @@ let clickCount = 0;
 let startTime = null;
 let successCount = 0;
 let failCount = 0;
-let isUnlimitedLikes = false; // New variable to track unlimited likes
+let isUnlimitedLikes = false;
+let isMenuVisible = true;
 
 function updateStats() {
     const runTime = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
@@ -260,15 +259,15 @@ function stopClicking() {
 }
 
 function resetDisplayedStats() {
-    startTime = null; // Reset runtime
-    updateStats(); // Update the display to reflect reset
+    startTime = null;
+    updateStats();
 }
 
 function resetAllStats() {
     clickCount = 0;
     successCount = 0;
     failCount = 0;
-    resetDisplayedStats(); // Update the display after resetting all stats
+    resetDisplayedStats();
     statsDisplay.style.display = 'none';
     resetStatsButton.style.display = 'none';
 }
@@ -340,6 +339,7 @@ function showHowToUse() {
             <li>Press ESC key to stop at any time</li>
             <li>Press R key to reset displayed statistics</li>
             <li>Use Reset Stats button to clear all current stats</li>
+            <li>Press Home key to stop the auto liking process and close the menu</li>
         </ol>
         <button id="closeHowTo" style="
             margin-top: 15px;
@@ -357,7 +357,6 @@ function showHowToUse() {
     document.getElementById('closeHowTo').onclick = () => modal.remove();
 }
 
-// Event Listeners
 authorButton.addEventListener('click', showAuthorInfo);
 helpButton.addEventListener('click', showHowToUse);
 resetStatsButton.addEventListener('click', resetAllStats);
@@ -381,22 +380,34 @@ controlButton.addEventListener('click', () => {
 });
 
 unlimitedLikesButton.addEventListener('click', () => {
-    isUnlimitedLikes = !isUnlimitedLikes; // Toggle unlimited likes
+    isUnlimitedLikes = !isUnlimitedLikes;
     if (isUnlimitedLikes) {
-        likeLimitInput.disabled = true; // Disable like limit input
+        likeLimitInput.disabled = true;
         unlimitedLikesButton.innerHTML = '✅ Unlimited Likes Enabled';
     } else {
-        likeLimitInput.disabled = false; // Enable like limit input
+        likeLimitInput.disabled = false;
         unlimitedLikesButton.innerHTML = '🔄 Toggle Unlimited Likes';
     }
 });
 
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'Insert') {
+        isMenuVisible = !isMenuVisible;
+        controlPanel.style.display = isMenuVisible ? 'flex' : 'none';
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Home') {
+        stopClicking();
+        controlPanel.style.display = 'none';
+        alert('Program has been stopped and UI menu closed.');
+    }
     if (e.key === 'Escape' && isClicking) {
         stopClicking();
     }
     if (e.key === 'r' && !isClicking) {
-        resetDisplayedStats(); // Reset only displayed stats
+        resetDisplayedStats();
     }
 });
 
@@ -409,4 +420,4 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-console.log('✨ Enhanced TikTok Auto Liker initialized! Press ESC to stop, R to reset displayed stats');
+console.log('✨ Enhanced TikTok Auto Liker initialized! Press ESC to stop, R to reset displayed stats, Insert to toggle menu visibility, Home to stop the program and close the UI.');
