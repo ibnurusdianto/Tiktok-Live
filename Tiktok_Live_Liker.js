@@ -133,6 +133,56 @@ intervalInput.style.cssText = `
     text-align: center;
 `;
 
+const likeLimitControl = document.createElement('div');
+likeLimitControl.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 10px;
+`;
+
+const likeLimitLabel = document.createElement('span');
+likeLimitLabel.innerHTML = '💖 Like Limit:';
+likeLimitLabel.style.cssText = `
+    color: white;
+    font-size: 14px;
+`;
+
+const likeLimitInput = document.createElement('input');
+likeLimitInput.type = 'number';
+likeLimitInput.min = '1';
+likeLimitInput.value = '100';
+likeLimitInput.style.cssText = `
+    width: 70px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid rgba(254, 44, 85, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 14px;
+    text-align: center;
+`;
+
+const unlimitedLikesButton = document.createElement('button');
+unlimitedLikesButton.innerHTML = '🔄 Toggle Unlimited Likes';
+unlimitedLikesButton.style.cssText = `
+    padding: 8px;
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+`;
+
+likeLimitControl.appendChild(likeLimitLabel);
+likeLimitControl.appendChild(likeLimitInput);
+controlsContainer.appendChild(likeLimitControl);
+controlsContainer.appendChild(unlimitedLikesButton);
+
 const statsDisplay = document.createElement('div');
 statsDisplay.style.cssText = `
     background: rgba(255, 255, 255, 0.05);
@@ -150,6 +200,8 @@ let clickCount = 0;
 let startTime = null;
 let successCount = 0;
 let failCount = 0;
+let isUnlimitedLikes = false;
+let isMenuVisible = true;
 
 function updateStats() {
     const runTime = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
@@ -164,6 +216,11 @@ function updateStats() {
 }
 
 function autoClick() {
+    if (!isUnlimitedLikes && clickCount >= parseInt(likeLimitInput.value)) {
+        stopClicking();
+        alert('Like limit reached!');
+        return;
+    }
     try {
         const likeButton = document.querySelector('.css-1mk0i7a-DivLikeBtnIcon');
         if (likeButton) {
@@ -183,30 +240,38 @@ function autoClick() {
 }
 
 function startClicking() {
+    if (isClicking) return;
     isClicking = true;
     startTime = Date.now();
     controlButton.innerHTML = '⏹️ Stop Auto Like';
     controlButton.style.background = 'linear-gradient(45deg, #666, #999)';
     intervalInput.disabled = true;
+    likeLimitInput.disabled = isUnlimitedLikes;
     clickInterval = setInterval(autoClick, intervalInput.value * 1000);
     statsDisplay.style.display = 'block';
     resetStatsButton.style.display = 'block';
 }
 
 function stopClicking() {
+    if (!isClicking) return;
     isClicking = false;
     controlButton.innerHTML = '▶️ Start Auto Like';
     controlButton.style.background = 'linear-gradient(45deg, #fe2c55, #ff6b81)';
     intervalInput.disabled = false;
+    likeLimitInput.disabled = false;
     clearInterval(clickInterval);
 }
 
-function resetStats() {
-    clickCount = 0;
+function resetDisplayedStats() {
     startTime = null;
+    updateStats();
+}
+
+function resetAllStats() {
+    clickCount = 0;
     successCount = 0;
     failCount = 0;
-    updateStats();
+    resetDisplayedStats();
     statsDisplay.style.display = 'none';
     resetStatsButton.style.display = 'none';
 }
@@ -273,10 +338,13 @@ function showHowToUse() {
         <h3 style="margin-bottom: 15px; text-align: center;">❓ How to Use</h3>
         <ol style="margin-left: 20px; line-height: 1.6;">
             <li>Set your desired interval (in seconds)</li>
+            <li>Set your desired like limit or choose Unlimited Likes</li>
             <li>Click "Start Auto Like" to begin</li>
             <li>Press ESC key to stop at any time</li>
-            <li>Press R key to reset statistics</li>
-            <li>Use Reset Stats button to clear current stats</li>
+            <li>Press R key to reset displayed statistics</li>
+            <li>Use Reset Stats button to clear all current stats</li>
+            <li>Press Home key to stop the auto liking process and close the menu</li>
+            <li>Press Insert key to toggle menu visibility</li>
         </ol>
         <button id="closeHowTo" style="
             margin-top: 15px;
@@ -296,7 +364,7 @@ function showHowToUse() {
 
 authorButton.addEventListener('click', showAuthorInfo);
 helpButton.addEventListener('click', showHowToUse);
-resetStatsButton.addEventListener('click', resetStats);
+resetStatsButton.addEventListener('click', resetAllStats);
 
 intervalControl.appendChild(intervalLabel);
 intervalControl.appendChild(intervalInput);
@@ -305,6 +373,8 @@ controlsContainer.appendChild(intervalControl);
 controlsContainer.appendChild(statsDisplay);
 controlsContainer.appendChild(resetStatsButton);
 controlPanel.appendChild(controlsContainer);
+controlsContainer.appendChild(likeLimitControl);
+controlsContainer.appendChild(unlimitedLikesButton);
 
 controlButton.addEventListener('click', () => {
     if (!isClicking) {
@@ -314,12 +384,32 @@ controlButton.addEventListener('click', () => {
     }
 });
 
+unlimitedLikesButton.addEventListener('click', () => {
+    isUnlimitedLikes = !isUnlimitedLikes;
+    if (isUnlimitedLikes) {
+        likeLimitInput.disabled = true;
+        unlimitedLikesButton.innerHTML = '✅ Unlimited Likes Enabled';
+    } else {
+        likeLimitInput.disabled = false;
+        unlimitedLikesButton.innerHTML = '🔄 Toggle Unlimited Likes';
+    }
+});
+
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'Insert') {
+        isMenuVisible = !isMenuVisible;
+        controlPanel.style.display = isMenuVisible ? 'flex' : 'none';
+    }
+    if (e.key === 'Home') {
+        stopClicking();
+        controlPanel.style.display = 'none';
+        alert('Program has been stopped and UI menu closed.');
+    }
     if (e.key === 'Escape' && isClicking) {
         stopClicking();
     }
     if (e.key === 'r' && !isClicking) {
-        resetStats();
+        resetDisplayedStats();
     }
 });
 
@@ -332,5 +422,4 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-console.log('✨ Enhanced TikTok Auto Liker initialized! Press ESC to stop, R to reset stats');
-
+console.log('✨ Enhanced TikTok Auto Liker initialized! Press ESC to stop, R to reset displayed stats, Insert to toggle menu visibility, Home to stop the program and close the UI.');
